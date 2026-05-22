@@ -169,7 +169,7 @@ export default function App() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search country"
+            placeholder="Search country/code"
             className="w-full max-w-sm rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none"
           />
         </div>
@@ -187,7 +187,10 @@ export default function App() {
               return (
                 <div key={group.team} className="rounded-2xl border border-white/10 bg-white/10 p-2">
                   <div className="mb-2 flex items-center justify-between gap-2">
-                    <h2 className="truncate text-sm font-black">{group.team}</h2>
+                    <div className="min-w-0">
+                      <h2 className="text-lg font-black leading-none">{group.shortName}</h2>
+                      <p className="truncate text-[10px] font-bold text-white/60">{group.team}</p>
+                    </div>
 
                     <span className="shrink-0 rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-bold">
                       {ownedInGroup}/{fullGroup.stickers.length}

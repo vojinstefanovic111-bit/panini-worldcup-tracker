@@ -41,22 +41,18 @@ function makeGroups() {
 
   for (const team of teams) {
     const stickers = [];
-
     for (let number = 1; number <= STICKERS_PER_TEAM; number++) {
       stickers.push({ id, number, name: shortNames[team] + number });
       id++;
     }
-
     groups.push({ team, shortName: shortNames[team], stickers });
   }
 
   const specialStickers = [];
-
   for (let number = 1; number <= SPECIAL_STICKERS; number++) {
     specialStickers.push({ id, number, name: "FWC" + number });
     id++;
   }
-
   groups.push({ team: "World Cup 26 Specials", shortName: "FWC", stickers: specialStickers });
 
   return groups;
@@ -75,9 +71,12 @@ export default function App() {
 
   const [query, setQuery] = useState("");
   const [view, setView] = useState("all");
+  const [backupCode, setBackupCode] = useState("");
+  const [message, setMessage] = useState("Saved on this device");
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(collection));
+    setMessage("Saved on this device");
   }, [collection]);
 
   function cycleSticker(id) {
@@ -91,6 +90,44 @@ export default function App() {
 
       return next;
     });
+  }
+
+  function exportBackup() {
+    const code = Array.from({ length: TOTAL_STICKERS }, (_, index) => {
+      const count = Math.min(collection[index + 1] || 0, 3);
+      return count.toString();
+    }).join("").replace(/0+$/, "");
+
+    setBackupCode(code || "0");
+    setMessage("Backup code exported");
+  }
+
+  function importBackup() {
+    const text = backupCode.trim();
+
+    if (!/^[0-3]+$/.test(text)) {
+      setMessage("Invalid backup code");
+      return;
+    }
+
+    const next = {};
+
+    for (let i = 0; i < text.length && i < TOTAL_STICKERS; i++) {
+      const count = Number(text[i]);
+      if (count > 0) next[i + 1] = count;
+    }
+
+    setCollection(next);
+    setMessage("Backup code imported");
+  }
+
+  async function copyBackup() {
+    try {
+      await navigator.clipboard.writeText(backupCode);
+      setMessage("Backup copied");
+    } catch {
+      setMessage("Copy failed");
+    }
   }
 
   const filteredGroups = useMemo(() => {
@@ -107,7 +144,6 @@ export default function App() {
 
         const stickers = group.stickers.filter((sticker) => {
           const count = collection[sticker.id] || 0;
-
           if (view === "owned") return count > 0;
           if (view === "duplicates") return count > 1;
           if (view === "missing") return count === 0;
@@ -115,7 +151,6 @@ export default function App() {
         });
 
         if (stickers.length === 0) return null;
-
         return { ...group, stickers };
       })
       .filter(Boolean);
@@ -137,10 +172,33 @@ export default function App() {
       <div className="mx-auto max-w-7xl">
         <h1 className="mb-2 text-center text-2xl font-black">Panini Tracker</h1>
 
+        <div className="mb-2 text-center text-[11px] font-bold text-white/70">{message}</div>
+
         <div className="mb-3 flex flex-wrap items-center justify-center gap-2 text-xs font-bold">
           <span className="rounded-full bg-white/10 px-3 py-1">Owned: {totalOwned}</span>
           <span className="rounded-full bg-white/10 px-3 py-1">Duplicates: {duplicates}</span>
           <span className="rounded-full bg-white/10 px-3 py-1">Need: {missing}</span>
+        </div>
+
+        <div className="mb-3 rounded-2xl border border-white/10 bg-white/10 p-3">
+          <textarea
+            value={backupCode}
+            onChange={(e) => setBackupCode(e.target.value)}
+            placeholder="Backup code appears here. Paste backup code here to import."
+            className="mb-2 min-h-16 w-full rounded-xl border border-white/10 bg-black/30 p-3 text-xs outline-none"
+          />
+
+          <div className="flex flex-wrap justify-center gap-2">
+            <button onClick={exportBackup} className="rounded-full bg-white px-4 py-2 text-xs font-black text-slate-950">
+              Export Backup
+            </button>
+            <button onClick={copyBackup} className="rounded-full bg-white/10 px-4 py-2 text-xs font-black text-white">
+              Copy Code
+            </button>
+            <button onClick={importBackup} className="rounded-full bg-white/10 px-4 py-2 text-xs font-black text-white">
+              Import Backup
+            </button>
+          </div>
         </div>
 
         <div className="mb-3 flex flex-wrap justify-center gap-2">
@@ -150,9 +208,7 @@ export default function App() {
               type="button"
               onClick={() => setView(filter.id)}
               className={`rounded-full px-4 py-2 text-xs font-black transition ${
-                view === filter.id
-                  ? "bg-white text-slate-950"
-                  : "bg-white/10 text-white hover:bg-white/20"
+                view === filter.id ? "bg-white text-slate-950" : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
               {filter.label}
@@ -191,7 +247,6 @@ export default function App() {
                       <h2 className="text-lg font-black leading-none">{group.shortName}</h2>
                       <p className="truncate text-[10px] font-bold text-white/60">{group.team}</p>
                     </div>
-
                     <span className="shrink-0 rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-bold">
                       {ownedInGroup}/{fullGroup.stickers.length}
                     </span>
@@ -200,7 +255,6 @@ export default function App() {
                   <div className="grid grid-cols-10 gap-1">
                     {group.stickers.map((sticker) => {
                       const count = collection[sticker.id] || 0;
-
                       return (
                         <button
                           key={sticker.id}
@@ -208,15 +262,10 @@ export default function App() {
                           onClick={() => cycleSticker(sticker.id)}
                           title={`${sticker.name} - you have ${count}`}
                           className={`relative aspect-square rounded-md text-[10px] font-black leading-none transition ${
-                            count > 1
-                              ? "bg-yellow-300 text-slate-950"
-                              : count === 1
-                              ? "bg-white text-slate-950"
-                              : "bg-black/25 text-white/60"
+                            count > 1 ? "bg-yellow-300 text-slate-950" : count === 1 ? "bg-white text-slate-950" : "bg-black/25 text-white/60"
                           }`}
                         >
                           {sticker.number}
-
                           {count > 1 && (
                             <span className="absolute -right-1 -top-1 rounded-full bg-slate-950 px-1 text-[8px] text-white">
                               {count}

@@ -16,77 +16,23 @@ const teams = [
 ];
 
 const shortNames = {
-  "Mexico": "MEX",
-  "South Africa": "RSA",
-  "Korea Republic": "KOR",
-  "Czechia": "CZE",
-  "Canada": "CAN",
-  "Bosnia and Herzegovina": "BIH",
-  "Qatar": "QAT",
-  "Switzerland": "SUI",
-  "Haiti": "HAI",
-  "Scotland": "SCO",
-  "Brazil": "BRA",
-  "Morocco": "MAR",
-  "USA": "USA",
-  "Paraguay": "PAR",
-  "Australia": "AUS",
-  "Türkiye": "TUR",
-  "Côte d'Ivoire": "CIV",
-  "Ecuador": "ECU",
-  "Germany": "GER",
-  "Curaçao": "CUW",
-  "Netherlands": "NED",
-  "Japan": "JPN",
-  "Sweden": "SWE",
-  "Tunisia": "TUN",
-  "IR Iran": "IRN",
-  "New Zealand": "NZL",
-  "Belgium": "BEL",
-  "Egypt": "EGY",
-  "Saudi Arabia": "KSA",
-  "Uruguay": "URU",
-  "Spain": "ESP",
-  "Cabo Verde": "CPV",
-  "France": "FRA",
-  "Senegal": "SEN",
-  "Iraq": "IRQ",
-  "Norway": "NOR",
-  "Argentina": "ARG",
-  "Algeria": "ALG",
-  "Austria": "AUT",
-  "Jordan": "JOR",
-  "Portugal": "POR",
-  "Congo DR": "COD",
-  "Uzbekistan": "UZB",
-  "Colombia": "COL",
-  "Ghana": "GHA",
-  "Panama": "PAN",
-  "England": "ENG",
-  "Croatia": "CRO"
+  "Mexico": "MEX","South Africa": "RSA","Korea Republic": "KOR","Czechia": "CZE",
+  "Canada": "CAN","Bosnia and Herzegovina": "BIH","Qatar": "QAT","Switzerland": "SUI",
+  "Haiti": "HAI","Scotland": "SCO","Brazil": "BRA","Morocco": "MAR",
+  "USA": "USA","Paraguay": "PAR","Australia": "AUS","Türkiye": "TUR",
+  "Côte d'Ivoire": "CIV","Ecuador": "ECU","Germany": "GER","Curaçao": "CUW",
+  "Netherlands": "NED","Japan": "JPN","Sweden": "SWE","Tunisia": "TUN",
+  "IR Iran": "IRN","New Zealand": "NZL","Belgium": "BEL","Egypt": "EGY",
+  "Saudi Arabia": "KSA","Uruguay": "URU","Spain": "ESP","Cabo Verde": "CPV",
+  "France": "FRA","Senegal": "SEN","Iraq": "IRQ","Norway": "NOR",
+  "Argentina": "ARG","Algeria": "ALG","Austria": "AUT","Jordan": "JOR",
+  "Portugal": "POR","Congo DR": "COD","Uzbekistan": "UZB","Colombia": "COL",
+  "Ghana": "GHA","Panama": "PAN","England": "ENG","Croatia": "CRO"
 };
 
 const STORAGE_KEY = "panini-world-cup-26-collection";
 const STICKERS_PER_TEAM = 20;
 const SPECIAL_STICKERS = 20;
-const TOTAL_STICKERS = teams.length * STICKERS_PER_TEAM + SPECIAL_STICKERS;
-const CODE_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
-
-function numberToCode(number, length = 2) {
-  let value = number;
-  let code = "";
-
-  for (let i = 0; i < length; i++) {
-    code = CODE_CHARS[value % 64] + code;
-    value = Math.floor(value / 64);
-  }
-
-  return code;
-}
-
-function codeToNumber(code) {
-  return code.split("").reduce((total, char) => total * 64 + CODE_CHARS.indexOf(char), 0);
-}
 
 function makeStickers() {
   const list = [];
@@ -95,30 +41,22 @@ function makeStickers() {
   for (const team of teams) {
     for (let i = 1; i <= STICKERS_PER_TEAM; i++) {
       list.push({
-        id: id,
-        team: team,
-        section: "Team",
-        number: String(i),
-        globalNumber: String(id).padStart(3, "0"),
+        id,
+        team,
         name: shortNames[team] + i,
-        rarity: i === 20 ? "Legendary" : i % 10 === 0 ? "Shiny" : i % 5 === 0 ? "Special" : "Normal",
+        globalNumber: String(id).padStart(3, "0")
       });
-
       id++;
     }
   }
 
   for (let i = 1; i <= SPECIAL_STICKERS; i++) {
     list.push({
-      id: id,
-      team: "World Cup 26 Specials",
-      section: "Special",
-      number: String(i),
-      globalNumber: String(id).padStart(3, "0"),
+      id,
+      team: "FWC",
       name: "FWC" + i,
-      rarity: i % 5 === 0 ? "Legendary" : "Special",
+      globalNumber: String(id).padStart(3, "0")
     });
-
     id++;
   }
 
@@ -161,55 +99,51 @@ export default function App() {
   }, [query]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-slate-950 to-sky-950 p-4 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-slate-950 to-sky-950 p-2 text-white">
       <div className="mx-auto max-w-7xl">
-        <h1 className="mb-6 text-center text-4xl font-black">
-          Panini World Cup 26 Tracker
+        <h1 className="mb-4 text-center text-2xl font-black">
+          Panini Tracker
         </h1>
 
-        <div className="mb-6 flex justify-center">
+        <div className="mb-4 flex justify-center">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search stickers..."
-            className="w-full max-w-md rounded-2xl border border-white/10 bg-black/30 px-4 py-3 outline-none"
+            placeholder="Search"
+            className="w-full max-w-sm rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+        <div className="grid grid-cols-4 gap-1 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12">
           {filtered.map((sticker) => {
             const count = collection[sticker.id] || 0;
 
             return (
               <div
                 key={sticker.id}
-                className={`rounded-2xl border p-2 text-center transition ${
+                className={`rounded-xl border p-1 text-center ${
                   count > 0
                     ? "border-white bg-white text-slate-950"
                     : "border-white/10 bg-white/10 text-white"
                 }`}
               >
-                <p className="text-[10px] opacity-70">#{sticker.globalNumber}</p>
-                <h3 className="text-sm font-black">{sticker.name}</h3>
+                <p className="text-[9px] font-black leading-none">{sticker.name}</p>
+                <p className="text-[8px] opacity-60 leading-none">{sticker.globalNumber}</p>
 
-                <div className="my-2 rounded-xl border border-white/10 bg-black/10 p-2 text-[10px]">
-                  {sticker.team}
-                </div>
-
-                <div className="flex items-center justify-center gap-2">
+                <div className="mt-1 flex items-center justify-center gap-1">
                   <button
                     onClick={() => changeCount(sticker.id, -1)}
-                    className="rounded-lg bg-black/20 px-2 py-1"
+                    className="rounded bg-black/20 px-1 text-[10px]"
                   >
                     -
                   </button>
 
-                  <span className="text-sm font-black">{count}</span>
+                  <span className="text-[10px] font-black">{count}</span>
 
                   <button
                     onClick={() => changeCount(sticker.id, 1)}
-                    className="rounded-lg bg-black/20 px-2 py-1"
+                    className="rounded bg-black/20 px-1 text-[10px]"
                   >
                     +
                   </button>

@@ -54,6 +54,7 @@ function makeGroups() {
   }
 
   const specialStickers = [];
+
   for (let number = 1; number <= SPECIAL_STICKERS; number++) {
     specialStickers.push({
       id,
@@ -63,7 +64,11 @@ function makeGroups() {
     id++;
   }
 
-  groups.push({ team: "World Cup 26 Specials", shortName: "FWC", stickers: specialStickers });
+  groups.push({
+    team: "World Cup 26 Specials",
+    shortName: "FWC",
+    stickers: specialStickers,
+  });
 
   return groups;
 }
@@ -85,22 +90,17 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(collection));
   }, [collection]);
 
-  function addSticker(id) {
-    setCollection((current) => ({
-      ...current,
-      [id]: (current[id] || 0) + 1,
-    }));
-  }
-
-  function removeSticker(event, id) {
-    event.preventDefault();
-
+  function cycleSticker(id) {
     setCollection((current) => {
       const next = { ...current };
-      const newCount = Math.max(0, (next[id] || 0) - 1);
+      const currentCount = next[id] || 0;
+      const newCount = currentCount >= 3 ? 0 : currentCount + 1;
 
-      if (newCount === 0) delete next[id];
-      else next[id] = newCount;
+      if (newCount === 0) {
+        delete next[id];
+      } else {
+        next[id] = newCount;
+      }
 
       return next;
     });
@@ -128,7 +128,7 @@ export default function App() {
         <div className="mb-3 flex flex-wrap items-center justify-center gap-2 text-xs font-bold">
           <span className="rounded-full bg-white/10 px-3 py-1">Owned: {totalOwned}</span>
           <span className="rounded-full bg-white/10 px-3 py-1">Duplicates: {duplicates}</span>
-          <span className="rounded-full bg-white/10 px-3 py-1">Click +1 / right click -1</span>
+          <span className="rounded-full bg-white/10 px-3 py-1">Tap: 0 → 1 → 2 → 3 → 0</span>
         </div>
 
         <div className="mb-4 flex justify-center">
@@ -146,9 +146,13 @@ export default function App() {
             const ownedInGroup = group.stickers.filter((sticker) => (collection[sticker.id] || 0) > 0).length;
 
             return (
-              <div key={group.team} className="rounded-2xl border border-white/10 bg-white/10 p-2">
+              <div
+                key={group.team}
+                className="rounded-2xl border border-white/10 bg-white/10 p-2"
+              >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <h2 className="truncate text-sm font-black">{group.team}</h2>
+
                   <span className="shrink-0 rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-bold">
                     {ownedInGroup}/{group.stickers.length}
                   </span>
@@ -162,10 +166,9 @@ export default function App() {
                       <button
                         key={sticker.id}
                         type="button"
-                        onClick={() => addSticker(sticker.id)}
-                        onContextMenu={(event) => removeSticker(event, sticker.id)}
+                        onClick={() => cycleSticker(sticker.id)}
                         title={`${sticker.name} - you have ${count}`}
-                        className={`relative aspect-square rounded-md text-[10px] font-black leading-none ${
+                        className={`relative aspect-square rounded-md text-[10px] font-black leading-none transition ${
                           count > 1
                             ? "bg-yellow-300 text-slate-950"
                             : count === 1
@@ -174,6 +177,7 @@ export default function App() {
                         }`}
                       >
                         {sticker.number}
+
                         {count > 1 && (
                           <span className="absolute -right-1 -top-1 rounded-full bg-slate-950 px-1 text-[8px] text-white">
                             {count}

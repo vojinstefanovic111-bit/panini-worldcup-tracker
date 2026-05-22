@@ -33,6 +33,7 @@ const shortNames = {
 const STORAGE_KEY = "panini-world-cup-26-collection";
 const STICKERS_PER_TEAM = 20;
 const SPECIAL_STICKERS = 20;
+const TOTAL_STICKERS = teams.length * STICKERS_PER_TEAM + SPECIAL_STICKERS;
 
 function makeGroups() {
   const groups = [];
@@ -42,11 +43,7 @@ function makeGroups() {
     const stickers = [];
 
     for (let number = 1; number <= STICKERS_PER_TEAM; number++) {
-      stickers.push({
-        id,
-        number,
-        name: shortNames[team] + number,
-      });
+      stickers.push({ id, number, name: shortNames[team] + number });
       id++;
     }
 
@@ -56,19 +53,11 @@ function makeGroups() {
   const specialStickers = [];
 
   for (let number = 1; number <= SPECIAL_STICKERS; number++) {
-    specialStickers.push({
-      id,
-      number,
-      name: "FWC" + number,
-    });
+    specialStickers.push({ id, number, name: "FWC" + number });
     id++;
   }
 
-  groups.push({
-    team: "World Cup 26 Specials",
-    shortName: "FWC",
-    stickers: specialStickers,
-  });
+  groups.push({ team: "World Cup 26 Specials", shortName: "FWC", stickers: specialStickers });
 
   return groups;
 }
@@ -85,6 +74,7 @@ export default function App() {
   });
 
   const [query, setQuery] = useState("");
+  const [view, setView] = useState("all");
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(collection));
@@ -96,11 +86,8 @@ export default function App() {
       const currentCount = next[id] || 0;
       const newCount = currentCount >= 3 ? 0 : currentCount + 1;
 
-      if (newCount === 0) {
-        delete next[id];
-      } else {
-        next[id] = newCount;
-      }
+      if (newCount === 0) delete next[id];
+      else next[id] = newCount;
 
       return next;
     });
@@ -109,16 +96,41 @@ export default function App() {
   const filteredGroups = useMemo(() => {
     const search = query.trim().toLowerCase();
 
-    if (!search) return groups;
+    return groups
+      .map((group) => {
+        const matchesSearch =
+          !search ||
+          group.team.toLowerCase().includes(search) ||
+          group.shortName.toLowerCase().includes(search);
 
-    return groups.filter((group) =>
-      group.team.toLowerCase().includes(search) ||
-      group.shortName.toLowerCase().includes(search)
-    );
-  }, [query]);
+        if (!matchesSearch) return null;
+
+        const stickers = group.stickers.filter((sticker) => {
+          const count = collection[sticker.id] || 0;
+
+          if (view === "owned") return count > 0;
+          if (view === "duplicates") return count > 1;
+          if (view === "missing") return count === 0;
+          return true;
+        });
+
+        if (stickers.length === 0) return null;
+
+        return { ...group, stickers };
+      })
+      .filter(Boolean);
+  }, [query, view, collection]);
 
   const totalOwned = Object.values(collection).filter((count) => count > 0).length;
   const duplicates = Object.values(collection).reduce((sum, count) => sum + Math.max(0, count - 1), 0);
+  const missing = TOTAL_STICKERS - totalOwned;
+
+  const filters = [
+    { id: "all", label: "All" },
+    { id: "owned", label: "Owned" },
+    { id: "duplicates", label: "Duplicates" },
+    { id: "missing", label: "Need" },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-slate-950 to-sky-950 p-2 text-white">
@@ -128,8 +140,29 @@ export default function App() {
         <div className="mb-3 flex flex-wrap items-center justify-center gap-2 text-xs font-bold">
           <span className="rounded-full bg-white/10 px-3 py-1">Owned: {totalOwned}</span>
           <span className="rounded-full bg-white/10 px-3 py-1">Duplicates: {duplicates}</span>
-          <span className="rounded-full bg-white/10 px-3 py-1">Tap: 0 → 1 → 2 → 3 → 0</span>
+          <span className="rounded-full bg-white/10 px-3 py-1">Need: {missing}</span>
         </div>
+
+        <div className="mb-3 flex flex-wrap justify-center gap-2">
+          {filters.map((filter) => (
+            <button
+              key={filter.id}
+              type="button"
+              onClick={() => setView(filter.id)}
+              className={`rounded-full px-4 py-2 text-xs font-black transition ${
+                view === filter.id
+                  ? "bg-white text-slate-950"
+                  : "bg-white/10 text-white hover:bg-white/20"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
+        <p className="mb-3 text-center text-[11px] font-bold text-white/70">
+          Tap number: 0 → 1 → 2 → 3 → 0
+        </p>
 
         <div className="mb-4 flex justify-center">
           <input
@@ -141,56 +174,60 @@ export default function App() {
           />
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredGroups.map((group) => {
-            const ownedInGroup = group.stickers.filter((sticker) => (collection[sticker.id] || 0) > 0).length;
+        {filteredGroups.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/10 p-6 text-center text-sm font-bold text-white/70">
+            Nothing to show here.
+          </div>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredGroups.map((group) => {
+              const fullGroup = groups.find((item) => item.team === group.team);
+              const ownedInGroup = fullGroup.stickers.filter((sticker) => (collection[sticker.id] || 0) > 0).length;
 
-            return (
-              <div
-                key={group.team}
-                className="rounded-2xl border border-white/10 bg-white/10 p-2"
-              >
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <h2 className="truncate text-sm font-black">{group.team}</h2>
+              return (
+                <div key={group.team} className="rounded-2xl border border-white/10 bg-white/10 p-2">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <h2 className="truncate text-sm font-black">{group.team}</h2>
 
-                  <span className="shrink-0 rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-bold">
-                    {ownedInGroup}/{group.stickers.length}
-                  </span>
+                    <span className="shrink-0 rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-bold">
+                      {ownedInGroup}/{fullGroup.stickers.length}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-10 gap-1">
+                    {group.stickers.map((sticker) => {
+                      const count = collection[sticker.id] || 0;
+
+                      return (
+                        <button
+                          key={sticker.id}
+                          type="button"
+                          onClick={() => cycleSticker(sticker.id)}
+                          title={`${sticker.name} - you have ${count}`}
+                          className={`relative aspect-square rounded-md text-[10px] font-black leading-none transition ${
+                            count > 1
+                              ? "bg-yellow-300 text-slate-950"
+                              : count === 1
+                              ? "bg-white text-slate-950"
+                              : "bg-black/25 text-white/60"
+                          }`}
+                        >
+                          {sticker.number}
+
+                          {count > 1 && (
+                            <span className="absolute -right-1 -top-1 rounded-full bg-slate-950 px-1 text-[8px] text-white">
+                              {count}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-
-                <div className="grid grid-cols-10 gap-1">
-                  {group.stickers.map((sticker) => {
-                    const count = collection[sticker.id] || 0;
-
-                    return (
-                      <button
-                        key={sticker.id}
-                        type="button"
-                        onClick={() => cycleSticker(sticker.id)}
-                        title={`${sticker.name} - you have ${count}`}
-                        className={`relative aspect-square rounded-md text-[10px] font-black leading-none transition ${
-                          count > 1
-                            ? "bg-yellow-300 text-slate-950"
-                            : count === 1
-                            ? "bg-white text-slate-950"
-                            : "bg-black/25 text-white/60"
-                        }`}
-                      >
-                        {sticker.number}
-
-                        {count > 1 && (
-                          <span className="absolute -right-1 -top-1 rounded-full bg-slate-950 px-1 text-[8px] text-white">
-                            {count}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React,{useEffect,useMemo,useState}from 'react'
 
-const teams=['MEX','RSA','KOR','CZE','CAN','BIH','QAT','SUI','HAI','SCO','BRA','MAR','USA','PAR','AUS','TUR','CIV','ECU','GER','CUW','NED','JPN','SWE','TUN','IRN','NZL','BEL','EGY','KSA','URU','ESP','CPV','FRA','SEN','IRQ','NOR','ARG','ALG','AUT','JOR','POR','COD','UZB','COL','GHA','PAN','ENG','CRO','FWC']
+const teams=['MEX','RSA','KOR','CZE','CAN','BIH','QAT','SUI','BRA','MAR','HAI','SCO','USA','PAR','AUS','TUR','GER','CUW','CIV','ECU','NED','JPN','SWE','TUN','BEL','EGY','IRN','NZL','ESP','CPV','KSA','URU','FRA','SEN','IRQ','NOR','ARG','ALG','AUT','JOR','POR','COD','UZB','COL','ENG','CRO','GHA','PAN','FWC']
 const STORAGE='panini-tracker'
 const PER=20
 const chars='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_'

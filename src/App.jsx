@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState}from 'react'
+import React,{useEffect,useState}from 'react'
 
 const teams=['MEX','RSA','KOR','CZE','CAN','BIH','QAT','SUI','BRA','MAR','HAI','SCO','USA','PAR','AUS','TUR','GER','CUW','CIV','ECU','NED','JPN','SWE','TUN','BEL','EGY','IRN','NZL','ESP','CPV','KSA','URU','FRA','SEN','IRQ','NOR','ARG','ALG','AUT','JOR','POR','COD','UZB','COL','ENG','CRO','GHA','PAN','FWC']
 const STORAGE='panini-tracker'
@@ -56,6 +56,9 @@ export default function App(){
 
  const owned=Object.values(data).filter(v=>v>0).length
  const dup=Object.values(data).reduce((a,b)=>a+Math.max(0,b-1),0)
+ const visibleTeams=teams
+  .map((team,index)=>({team,index}))
+  .filter(({team})=>team.toLowerCase().includes(search.toLowerCase()))
 
  return <div className='min-h-screen bg-slate-950 text-white p-2'>
   <h1 className='text-2xl font-black text-center mb-2'>Panini Tracker</h1>
@@ -81,9 +84,9 @@ export default function App(){
   <input value={search} onChange={e=>setSearch(e.target.value)} placeholder='Search country' className='w-full max-w-sm block mx-auto mb-3 bg-black/30 rounded-xl p-2 text-sm'/>
 
   <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-   {teams.filter(t=>t.toLowerCase().includes(search.toLowerCase())).map((team,t)=>{
+   {visibleTeams.map(({team,index})=>{
     const nums=[...Array(PER)].map((_,i)=>i+1).filter(n=>{
-      const c=data[t*PER+n]||0
+      const c=data[index*PER+n]||0
       if(view==='owned') return c>0
       if(view==='duplicates') return c>1
       if(view==='missing') return c===0
@@ -98,7 +101,7 @@ export default function App(){
       </div>
       <div className='grid grid-cols-10 gap-1'>
        {nums.map(n=>{
-        const id=t*PER+n
+        const id=index*PER+n
         const c=data[id]||0
         return <button key={n} onClick={()=>tap(id)} className={`aspect-square rounded-md text-[10px] font-black relative ${c>1?'bg-yellow-300 text-black':c===1?'bg-white text-black':'bg-black/25 text-white/60'}`}>
          {n}
